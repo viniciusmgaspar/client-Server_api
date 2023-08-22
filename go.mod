@@ -1,4 +1,4 @@
-module github.com/viniciusmgaspar/client-Server_api
+module github.com/viniciusmgaspar/client_Server_api
 
 go 1.21.0
 
