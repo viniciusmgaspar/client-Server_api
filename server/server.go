@@ -27,7 +27,7 @@ type Quotation struct {
 }
 
 func saveDB(db *sql.DB, bid string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
 	_, err := db.ExecContext(ctx, fmt.Sprintf("INSERT INTO %s (currency, value, timestamp) VALUES (?, ?, ?)", "currencies"), "USD-BRL", bid, time.Now())
@@ -45,16 +45,16 @@ func Server(db *sql.DB) {
 		ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 		defer cancel()
 
-		req, error := http.NewRequestWithContext(ctx, "GET", "https://economia.awesomeapi.com.br/json/last/USD-BRL", nil)
-		if error != nil {
-			http.Error(w, "Error request url", http.StatusInternalServerError)
-			return
+		req, err := http.NewRequestWithContext(ctx, "GET", "https://economia.awesomeapi.com.br/json/last/USD-BRL", nil)
+		if err != nil {
+			fmt.Println("Request to API made!222222")
+			panic(err)
 		}
 		fmt.Println("Request to API made!")
 
-		resp, error := http.DefaultClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 
-		if error != nil {
+		if err != nil {
 			http.Error(w, "Error making request", http.StatusInternalServerError)
 			return
 		}
@@ -65,16 +65,23 @@ func Server(db *sql.DB) {
 			return
 		}
 
-		body, error := io.ReadAll(resp.Body)
-		if error != nil {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
 			http.Error(w, "Error reading response", http.StatusInternalServerError)
 			return
 		}
-
+		
 		var data Quotation
-		error = json.Unmarshal(body, &data)
-		if error != nil {
+		err = json.Unmarshal(body, &data)
+		if err != nil {
 			http.Error(w, "Error unmarshal", http.StatusInternalServerError)
+			return
+		}
+		
+		bid := data.USDBRL.Bid
+		fmt.Printf("bid:" + bid)
+		if err := saveDB(db, bid); err != nil {
+			http.Error(w, "Error saving to database", http.StatusInternalServerError)
 			return
 		}
 

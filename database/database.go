@@ -3,22 +3,21 @@ package database
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func DBconnect() (*sql.DB, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Microsecond)
 	defer cancel()
-	db, error := sql.Open("sqlite3", "currencies.db")
-	if error != nil {
-		return nil, error
+	db, err := sql.Open("sqlite3", "currencies.db")
+	if err != nil {
+		return nil, err
 	}
-	_, error = db.ExecContext(ctx,fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY AUTOINCREMENT, currency TEXT, value REAL, timestamp INTEGER)", "currencies"))
-	if error != nil {
-		return nil, error
+	_, err = db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS currencies (id INTEGER PRIMARY KEY AUTOINCREMENT, currency TEXT, value REAL, timestamp INTEGER)")
+	if err != nil {
+		return nil, err
 	}
 	return db, nil
 }
